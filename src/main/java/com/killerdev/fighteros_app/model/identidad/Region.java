@@ -23,7 +23,7 @@ public class Region {
 
     @Id
     @EqualsAndHashCode.Include
-    private Integer id;
+    private Short id;
 
     @Column(nullable = false, unique = true)
     private String nombre;
