@@ -43,6 +43,7 @@ import com.killerdev.fighteros_app.repository.pelea.PeleaRepository;
 import com.killerdev.fighteros_app.storage.StorageService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -103,8 +104,20 @@ public class BoxeadorService {
 
     public Page<BoxeadorResumenResponse> listar(UUID gimnasioId, Short regionId, UUID categoriaId,
                                                  EstadoDeportivoEnum estado, Pageable pageable) {
-        return boxeadorRepository.buscar(gimnasioId, regionId, categoriaId, estado, pageable)
-                .map(this::aResumen);
+        Specification<Boxeador> spec = Specification.where((Specification<Boxeador>) null);
+        if (gimnasioId != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("gimnasio").get("id"), gimnasioId));
+        }
+        if (regionId != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("region").get("id"), regionId));
+        }
+        if (categoriaId != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("categoria").get("id"), categoriaId));
+        }
+        if (estado != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("estadoDeportivo"), estado));
+        }
+        return boxeadorRepository.findAll(spec, pageable).map(this::aResumen);
     }
 
     public BoxeadorPerfilResponse obtenerPerfil(UUID id) {
