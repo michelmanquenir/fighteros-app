@@ -205,6 +205,15 @@ public class BoxeadorService {
                 .toList();
     }
 
+    public List<PesoPactadoResponse> obtenerPesosPactados(UUID id) {
+        buscarBoxeador(id);
+        return boxeadorPesoPactadoRepository.findByBoxeador_IdOrderByCreatedAtDesc(id).stream()
+                .map(p -> PesoPactadoResponse.builder()
+                        .id(p.getId()).pesoPactado(p.getPesoPactado()).createdAt(p.getCreatedAt())
+                        .build())
+                .toList();
+    }
+
     public List<MultimediaResponse> obtenerMultimedia(UUID id) {
         buscarBoxeador(id);
         return multimediaRepository.findByBoxeador_IdOrderByCreatedAtDesc(id).stream()

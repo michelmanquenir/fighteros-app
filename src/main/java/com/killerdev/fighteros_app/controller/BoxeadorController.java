@@ -81,6 +81,11 @@ public class BoxeadorController {
         return boxeadorService.obtenerProximasPeleas(id);
     }
 
+    @GetMapping("/{id}/pesos-pactados")
+    public List<PesoPactadoResponse> obtenerPesosPactados(@PathVariable UUID id) {
+        return boxeadorService.obtenerPesosPactados(id);
+    }
+
     @GetMapping("/{id}/medallas")
     public List<MedallaResponse> obtenerMedallas(@PathVariable UUID id) {
         return boxeadorService.obtenerMedallas(id);
