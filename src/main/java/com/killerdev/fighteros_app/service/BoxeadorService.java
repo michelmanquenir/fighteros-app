@@ -21,6 +21,7 @@ import com.killerdev.fighteros_app.model.deportivo.CategoriaPeso;
 import com.killerdev.fighteros_app.model.deportivo.Entrenador;
 import com.killerdev.fighteros_app.model.enums.EstadoDeportivoEnum;
 import com.killerdev.fighteros_app.model.enums.EstadoPeleaEnum;
+import com.killerdev.fighteros_app.model.enums.ResultadoPeleaEnum;
 import com.killerdev.fighteros_app.model.enums.TipoMultimediaEnum;
 import com.killerdev.fighteros_app.model.identidad.Gimnasio;
 import com.killerdev.fighteros_app.model.identidad.Region;
@@ -354,7 +355,8 @@ public class BoxeadorService {
     }
 
     private PeleaResumenResponse aPeleaResumen(Pelea p, UUID boxeadorId) {
-        Boxeador rival = p.getBoxeadorA().getId().equals(boxeadorId) ? p.getBoxeadorB() : p.getBoxeadorA();
+        boolean esBoxeadorA = p.getBoxeadorA().getId().equals(boxeadorId);
+        Boxeador rival = esBoxeadorA ? p.getBoxeadorB() : p.getBoxeadorA();
         return PeleaResumenResponse.builder()
                 .id(p.getId())
                 .eventoId(p.getEvento().getId())
@@ -363,8 +365,22 @@ public class BoxeadorService {
                 .rivalNombre(rival.getUsuario().getNombre())
                 .estado(p.getEstado())
                 .resultado(p.getResultado())
+                .resultadoBoxeador(resultadoParaBoxeador(p.getResultado(), esBoxeadorA))
                 .metodoVictoria(p.getMetodoVictoria())
                 .fecha(p.getFecha())
                 .build();
+    }
+
+    private String resultadoParaBoxeador(ResultadoPeleaEnum resultado, boolean esBoxeadorA) {
+        if (resultado == null) {
+            return null;
+        }
+        return switch (resultado) {
+            case victoria_a -> esBoxeadorA ? "victoria" : "derrota";
+            case victoria_b -> esBoxeadorA ? "derrota" : "victoria";
+            case empate -> "empate";
+            case no_contest -> "no_contest";
+            case cancelada -> "cancelada";
+        };
     }
 }

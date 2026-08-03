@@ -19,6 +19,10 @@ public class PeleaResumenResponse {
     private String rivalNombre;
     private EstadoPeleaEnum estado;
     private ResultadoPeleaEnum resultado;
+    // "victoria" | "derrota" | "empate" | "no_contest" | "cancelada" | null —
+    // resultado.resultado ya traducido desde la perspectiva de ESTE boxeador
+    // (resultado crudo es victoria_a/victoria_b relativo a la pelea, no al boxeador consultado)
+    private String resultadoBoxeador;
     private MetodoVictoriaEnum metodoVictoria;
     private OffsetDateTime fecha;
 }
