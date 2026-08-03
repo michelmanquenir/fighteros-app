@@ -50,6 +50,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.time.Period;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -104,19 +105,20 @@ public class BoxeadorService {
 
     public Page<BoxeadorResumenResponse> listar(UUID gimnasioId, Short regionId, UUID categoriaId,
                                                  EstadoDeportivoEnum estado, Pageable pageable) {
-        Specification<Boxeador> spec = Specification.where((Specification<Boxeador>) null);
+        List<Specification<Boxeador>> filtros = new ArrayList<>();
         if (gimnasioId != null) {
-            spec = spec.and((root, query, cb) -> cb.equal(root.get("gimnasio").get("id"), gimnasioId));
+            filtros.add((root, query, cb) -> cb.equal(root.get("gimnasio").get("id"), gimnasioId));
         }
         if (regionId != null) {
-            spec = spec.and((root, query, cb) -> cb.equal(root.get("region").get("id"), regionId));
+            filtros.add((root, query, cb) -> cb.equal(root.get("region").get("id"), regionId));
         }
         if (categoriaId != null) {
-            spec = spec.and((root, query, cb) -> cb.equal(root.get("categoria").get("id"), categoriaId));
+            filtros.add((root, query, cb) -> cb.equal(root.get("categoria").get("id"), categoriaId));
         }
         if (estado != null) {
-            spec = spec.and((root, query, cb) -> cb.equal(root.get("estadoDeportivo"), estado));
+            filtros.add((root, query, cb) -> cb.equal(root.get("estadoDeportivo"), estado));
         }
+        Specification<Boxeador> spec = Specification.allOf(filtros);
         return boxeadorRepository.findAll(spec, pageable).map(this::aResumen);
     }
 
