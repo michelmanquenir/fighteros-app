@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -14,4 +15,5 @@ public class AuthResponse {
     private UUID usuarioId;
     private String nombre;
     private String email;
+    private List<String> roles;
 }

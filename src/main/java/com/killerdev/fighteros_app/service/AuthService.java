@@ -3,6 +3,8 @@ package com.killerdev.fighteros_app.service;
 import com.killerdev.fighteros_app.dto.auth.AuthResponse;
 import com.killerdev.fighteros_app.dto.auth.LoginRequest;
 import com.killerdev.fighteros_app.dto.auth.RegistroBoxeadorRequest;
+import com.killerdev.fighteros_app.dto.auth.RegistroGimnasioRequest;
+import com.killerdev.fighteros_app.dto.auth.RegistroUsuarioRequest;
 import com.killerdev.fighteros_app.exception.DuplicateResourceException;
 import com.killerdev.fighteros_app.exception.ResourceNotFoundException;
 import com.killerdev.fighteros_app.exception.RutInvalidoException;
@@ -74,33 +76,45 @@ public class AuthService {
     }
 
     @Transactional
+    public AuthResponse registrarUsuario(RegistroUsuarioRequest request) {
+        Usuario usuario = crearUsuarioConRol(request.getNombre(), request.getEmail(), request.getPassword(),
+                request.getRegionId(), RolUsuarioEnum.espectador);
+        return construirRespuesta(usuario, List.of(RolUsuarioEnum.espectador.name()));
+    }
+
+    @Transactional
+    public AuthResponse registrarGimnasio(RegistroGimnasioRequest request) {
+        Usuario usuario = crearUsuarioConRol(request.getNombreAdmin(), request.getEmail(), request.getPassword(),
+                request.getRegionId(), RolUsuarioEnum.gimnasio_admin);
+
+        Gimnasio gimnasio = Gimnasio.builder()
+                .usuarioAdmin(usuario)
+                .nombre(request.getNombreGimnasio())
+                .direccion(request.getDireccion())
+                .region(resolverRegion(request.getRegionId()))
+                .telefono(request.getTelefono())
+                .email(request.getEmailGimnasio())
+                .redesSociales("{}")
+                .descripcion(request.getDescripcion())
+                .build();
+        gimnasioRepository.save(gimnasio);
+
+        return construirRespuesta(usuario, List.of(RolUsuarioEnum.gimnasio_admin.name()));
+    }
+
+    @Transactional
     public AuthResponse registrarBoxeador(RegistroBoxeadorRequest request) {
         if (!RutValidator.esValido(request.getRut())) {
             throw new RutInvalidoException("El RUT ingresado no es válido");
         }
         String rutNormalizado = RutValidator.normalizar(request.getRut());
 
-        if (usuarioRepository.existsByEmail(request.getEmail())) {
-            throw new DuplicateResourceException("Ya existe una cuenta con ese email");
-        }
         if (boxeadorRepository.existsByRut(rutNormalizado)) {
             throw new DuplicateResourceException("Ya existe un boxeador registrado con ese RUT");
         }
 
-        Usuario usuario = Usuario.builder()
-                .nombre(request.getNombre())
-                .email(request.getEmail())
-                .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .activo(true)
-                .region(resolverRegion(request.getRegionId()))
-                .build();
-        usuario = usuarioRepository.save(usuario);
-
-        UsuarioRol usuarioRol = UsuarioRol.builder()
-                .id(UsuarioRolId.builder().usuarioId(usuario.getId()).rol(RolUsuarioEnum.boxeador).build())
-                .usuario(usuario)
-                .build();
-        usuarioRolRepository.save(usuarioRol);
+        Usuario usuario = crearUsuarioConRol(request.getNombre(), request.getEmail(), request.getPassword(),
+                request.getRegionId(), RolUsuarioEnum.boxeador);
 
         CategoriaPeso categoria = resolverCategoria(request.getCategoriaId(), request.getSexo(), request.getPesoActual());
 
@@ -120,13 +134,7 @@ public class AuthService {
                 .build();
         boxeadorRepository.save(boxeador);
 
-        String token = jwtService.generarToken(usuario.getEmail(), List.of(RolUsuarioEnum.boxeador.name()));
-        return AuthResponse.builder()
-                .token(token)
-                .usuarioId(usuario.getId())
-                .nombre(usuario.getNombre())
-                .email(usuario.getEmail())
-                .build();
+        return construirRespuesta(usuario, List.of(RolUsuarioEnum.boxeador.name()));
     }
 
     @Transactional(readOnly = true)
@@ -136,16 +144,49 @@ public class AuthService {
 
         Usuario usuario = usuarioRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
-        List<String> roles = usuarioRolRepository.findByUsuario_Id(usuario.getId()).stream()
+        List<String> roles = obtenerRoles(usuario.getId());
+
+        return construirRespuesta(usuario, roles);
+    }
+
+    private Usuario crearUsuarioConRol(String nombre, String email, String password, Short regionId,
+                                        RolUsuarioEnum rol) {
+        if (usuarioRepository.existsByEmail(email)) {
+            throw new DuplicateResourceException("Ya existe una cuenta con ese email");
+        }
+
+        Usuario usuario = Usuario.builder()
+                .nombre(nombre)
+                .email(email)
+                .passwordHash(passwordEncoder.encode(password))
+                .activo(true)
+                .region(resolverRegion(regionId))
+                .build();
+        usuario = usuarioRepository.save(usuario);
+
+        UsuarioRol usuarioRol = UsuarioRol.builder()
+                .id(UsuarioRolId.builder().usuarioId(usuario.getId()).rol(rol).build())
+                .usuario(usuario)
+                .build();
+        usuarioRolRepository.save(usuarioRol);
+
+        return usuario;
+    }
+
+    private List<String> obtenerRoles(UUID usuarioId) {
+        return usuarioRolRepository.findByUsuario_Id(usuarioId).stream()
                 .map(ur -> ur.getId().getRol().name())
                 .toList();
-        String token = jwtService.generarToken(usuario.getEmail(), roles);
+    }
 
+    private AuthResponse construirRespuesta(Usuario usuario, List<String> roles) {
+        String token = jwtService.generarToken(usuario.getEmail(), roles);
         return AuthResponse.builder()
                 .token(token)
                 .usuarioId(usuario.getId())
                 .nombre(usuario.getNombre())
                 .email(usuario.getEmail())
+                .roles(roles)
                 .build();
     }
 

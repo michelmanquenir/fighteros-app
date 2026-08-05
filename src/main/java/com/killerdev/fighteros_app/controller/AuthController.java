@@ -3,6 +3,8 @@ package com.killerdev.fighteros_app.controller;
 import com.killerdev.fighteros_app.dto.auth.AuthResponse;
 import com.killerdev.fighteros_app.dto.auth.LoginRequest;
 import com.killerdev.fighteros_app.dto.auth.RegistroBoxeadorRequest;
+import com.killerdev.fighteros_app.dto.auth.RegistroGimnasioRequest;
+import com.killerdev.fighteros_app.dto.auth.RegistroUsuarioRequest;
 import com.killerdev.fighteros_app.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -20,6 +22,16 @@ public class AuthController {
 
     public AuthController(AuthService authService) {
         this.authService = authService;
+    }
+
+    @PostMapping("/registro")
+    public ResponseEntity<AuthResponse> registrarUsuario(@Valid @RequestBody RegistroUsuarioRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(authService.registrarUsuario(request));
+    }
+
+    @PostMapping("/registro/gimnasio")
+    public ResponseEntity<AuthResponse> registrarGimnasio(@Valid @RequestBody RegistroGimnasioRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(authService.registrarGimnasio(request));
     }
 
     @PostMapping("/registro/boxeador")
