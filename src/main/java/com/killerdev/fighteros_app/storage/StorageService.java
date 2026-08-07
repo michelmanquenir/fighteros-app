@@ -44,7 +44,7 @@ public class StorageService {
         }
 
         restClient.post()
-                .uri("{storageUrl}/storage/v1/object/{bucket}/{path}", storageUrl, bucket, path)
+                .uri(storageUrl + "/storage/v1/object/{bucket}/{path}", bucket, path)
                 .header("Authorization", "Bearer " + serviceKey)
                 .contentType(MediaType.parseMediaType(contentType))
                 .body(contenido)
