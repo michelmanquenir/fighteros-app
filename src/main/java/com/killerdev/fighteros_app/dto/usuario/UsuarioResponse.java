@@ -1,4 +1,4 @@
-package com.killerdev.fighteros_app.dto.auth;
+package com.killerdev.fighteros_app.dto.usuario;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,9 +10,8 @@ import java.util.UUID;
 @Getter
 @Builder
 @AllArgsConstructor
-public class AuthResponse {
-    private String token;
-    private UUID usuarioId;
+public class UsuarioResponse {
+    private UUID id;
     private String nombre;
     private String email;
     private String avatarUrl;

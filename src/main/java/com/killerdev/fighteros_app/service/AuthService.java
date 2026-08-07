@@ -186,6 +186,7 @@ public class AuthService {
                 .usuarioId(usuario.getId())
                 .nombre(usuario.getNombre())
                 .email(usuario.getEmail())
+                .avatarUrl(usuario.getAvatarUrl())
                 .roles(roles)
                 .build();
     }
