@@ -245,6 +245,7 @@ public class BoxeadorService {
         verificarPropietario(id, usuarioAutenticadoId);
         String url = storageService.subirArchivo(archivo, "boxeadores/" + id + "/foto");
         boxeador.setFotoUrl(url);
+        boxeador.getUsuario().setAvatarUrl(url);
         return aPerfil(boxeadorRepository.save(boxeador));
     }
 
