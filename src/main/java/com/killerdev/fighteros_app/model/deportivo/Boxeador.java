@@ -91,6 +91,9 @@ public class Boxeador {
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private NivelProgresionEnum nivelProgresion;
 
+    @Column(name = "perfil_publico", nullable = false)
+    private Boolean perfilPublico;
+
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private OffsetDateTime createdAt;
 

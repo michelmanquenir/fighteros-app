@@ -152,6 +152,9 @@ public class BoxeadorService {
         if (request.getEstadoDeportivo() != null) {
             boxeador.setEstadoDeportivo(request.getEstadoDeportivo());
         }
+        if (request.getPerfilPublico() != null) {
+            boxeador.setPerfilPublico(request.getPerfilPublico());
+        }
 
         return aPerfil(boxeadorRepository.save(boxeador));
     }
@@ -339,6 +342,7 @@ public class BoxeadorService {
                 .nombre(b.getUsuario().getNombre())
                 .email(b.getUsuario().getEmail())
                 .fotoUrl(b.getFotoUrl())
+                .perfilPublico(b.getPerfilPublico())
                 .rut(b.getRut())
                 .fechaNacimiento(b.getFechaNacimiento())
                 .edad(edad)

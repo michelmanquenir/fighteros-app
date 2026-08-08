@@ -33,4 +33,5 @@ public class BoxeadorPerfilResponse {
     private String regionNombre;
     private EstadoDeportivoEnum estadoDeportivo;
     private NivelProgresionEnum nivelProgresion;
+    private Boolean perfilPublico;
 }

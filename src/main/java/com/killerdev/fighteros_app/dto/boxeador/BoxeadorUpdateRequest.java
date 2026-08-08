@@ -17,4 +17,5 @@ public class BoxeadorUpdateRequest {
     private UUID entrenadorId;
     private Short regionId;
     private EstadoDeportivoEnum estadoDeportivo;
+    private Boolean perfilPublico;
 }

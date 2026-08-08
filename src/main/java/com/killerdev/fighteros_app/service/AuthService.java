@@ -131,6 +131,7 @@ public class AuthService {
                 .region(resolverRegion(request.getRegionId()))
                 .estadoDeportivo(EstadoDeportivoEnum.activo)
                 .nivelProgresion(NivelProgresionEnum.debutante)
+                .perfilPublico(true)
                 .build();
         boxeadorRepository.save(boxeador);
 
