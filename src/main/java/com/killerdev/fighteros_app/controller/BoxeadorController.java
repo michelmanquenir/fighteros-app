@@ -50,9 +50,8 @@ public class BoxeadorController {
             @RequestParam(required = false) Short regionId,
             @RequestParam(required = false) UUID categoriaId,
             @RequestParam(required = false) EstadoDeportivoEnum estado,
-            @RequestParam(required = false) String nombre,
             Pageable pageable) {
-        return boxeadorService.listar(gimnasioId, regionId, categoriaId, estado, nombre, pageable);
+        return boxeadorService.listar(gimnasioId, regionId, categoriaId, estado, pageable);
     }
 
     @GetMapping("/{id}")

@@ -104,7 +104,7 @@ public class BoxeadorService {
     }
 
     public Page<BoxeadorResumenResponse> listar(UUID gimnasioId, Short regionId, UUID categoriaId,
-                                                 EstadoDeportivoEnum estado, String nombre, Pageable pageable) {
+                                                 EstadoDeportivoEnum estado, Pageable pageable) {
         List<Specification<Boxeador>> filtros = new ArrayList<>();
         if (gimnasioId != null) {
             filtros.add((root, query, cb) -> cb.equal(root.get("gimnasio").get("id"), gimnasioId));
@@ -117,10 +117,6 @@ public class BoxeadorService {
         }
         if (estado != null) {
             filtros.add((root, query, cb) -> cb.equal(root.get("estadoDeportivo"), estado));
-        }
-        if (nombre != null && !nombre.isBlank()) {
-            String patron = "%" + nombre.trim().toLowerCase() + "%";
-            filtros.add((root, query, cb) -> cb.like(cb.lower(root.get("usuario").get("nombre")), patron));
         }
         Specification<Boxeador> spec = Specification.allOf(filtros);
         return boxeadorRepository.findAll(spec, pageable).map(this::aResumen);
