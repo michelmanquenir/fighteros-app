@@ -24,5 +24,6 @@ public class EventoResponse {
     private String reglamentoUrl;
     private UUID organizadorId;
     private String organizadorNombre;
+    private UUID gimnasioId;
     private String gimnasioNombre;
 }

@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -27,6 +28,8 @@ public class EventoCreateRequest {
     private String lugar;
 
     private Short regionId;
+
+    private UUID gimnasioId;
 
     @Positive
     private Integer cuposTotales;

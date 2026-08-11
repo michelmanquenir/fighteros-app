@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/gimnasios")
 public class GimnasioController {
@@ -28,8 +30,8 @@ public class GimnasioController {
         return gimnasioService.crear(request, principal.getId());
     }
 
-    @GetMapping("/mio")
-    public GimnasioMioResponse obtenerMio(@AuthenticationPrincipal CustomUserDetails principal) {
-        return gimnasioService.obtenerMio(principal.getId());
+    @GetMapping("/mios")
+    public List<GimnasioMioResponse> obtenerMios(@AuthenticationPrincipal CustomUserDetails principal) {
+        return gimnasioService.obtenerMios(principal.getId());
     }
 }

@@ -2,6 +2,7 @@ package com.killerdev.fighteros_app.model.evento;
 
 import com.killerdev.fighteros_app.model.enums.EstadoEventoEnum;
 import com.killerdev.fighteros_app.model.enums.TipoEventoEnum;
+import com.killerdev.fighteros_app.model.identidad.Gimnasio;
 import com.killerdev.fighteros_app.model.identidad.Liga;
 import com.killerdev.fighteros_app.model.identidad.Region;
 import com.killerdev.fighteros_app.model.identidad.Usuario;
@@ -49,6 +50,10 @@ public class Evento {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "liga_id")
     private Liga liga;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "gimnasio_id")
+    private Gimnasio gimnasio;
 
     @Column(nullable = false)
     private String nombre;

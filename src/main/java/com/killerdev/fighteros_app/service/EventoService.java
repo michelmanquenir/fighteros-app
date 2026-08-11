@@ -4,6 +4,7 @@ import com.killerdev.fighteros_app.dto.evento.EventoCreateRequest;
 import com.killerdev.fighteros_app.dto.evento.EventoResponse;
 import com.killerdev.fighteros_app.dto.evento.EventoUpdateRequest;
 import com.killerdev.fighteros_app.exception.AccesoDenegadoException;
+import com.killerdev.fighteros_app.exception.OperacionInvalidaException;
 import com.killerdev.fighteros_app.exception.ResourceNotFoundException;
 import com.killerdev.fighteros_app.model.enums.EstadoEventoEnum;
 import com.killerdev.fighteros_app.model.enums.RolUsuarioEnum;
@@ -79,12 +80,11 @@ public class EventoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
         boolean esAdmin = tieneRol(usuarioAutenticadoId, RolUsuarioEnum.admin);
-        if (!esAdmin && gimnasioRepository.findByUsuarioAdmin_Id(usuarioAutenticadoId).isEmpty()) {
-            throw new AccesoDenegadoException("Necesitas un gimnasio registrado para crear eventos");
-        }
+        Gimnasio gimnasio = resolverGimnasioOrganizador(usuarioAutenticadoId, esAdmin, request.getGimnasioId());
 
         Evento evento = Evento.builder()
                 .organizador(organizador)
+                .gimnasio(gimnasio)
                 .nombre(request.getNombre())
                 .tipo(request.getTipo())
                 .fecha(request.getFecha())
@@ -137,6 +137,31 @@ public class EventoService {
         return aResponse(eventoRepository.save(evento));
     }
 
+    private Gimnasio resolverGimnasioOrganizador(UUID usuarioAutenticadoId, boolean esAdmin, UUID gimnasioId) {
+        if (esAdmin) {
+            if (gimnasioId == null) {
+                return null;
+            }
+            return gimnasioRepository.findById(gimnasioId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Gimnasio no encontrado"));
+        }
+
+        List<Gimnasio> misGimnasios = gimnasioRepository.findAllByUsuarioAdmin_Id(usuarioAutenticadoId);
+        if (misGimnasios.isEmpty()) {
+            throw new AccesoDenegadoException("Necesitas un gimnasio registrado para crear eventos");
+        }
+        if (gimnasioId != null) {
+            return misGimnasios.stream()
+                    .filter(g -> g.getId().equals(gimnasioId))
+                    .findFirst()
+                    .orElseThrow(() -> new AccesoDenegadoException("Ese gimnasio no te pertenece"));
+        }
+        if (misGimnasios.size() == 1) {
+            return misGimnasios.get(0);
+        }
+        throw new OperacionInvalidaException("Tienes más de un gimnasio, indica cuál organiza este evento");
+    }
+
     private boolean tieneRol(UUID usuarioId, RolUsuarioEnum rol) {
         return usuarioRolRepository.findByUsuario_Id(usuarioId).stream()
                 .anyMatch(ur -> ur.getId().getRol() == rol);
@@ -156,10 +181,6 @@ public class EventoService {
     }
 
     private EventoResponse aResponse(Evento e) {
-        String gimnasioNombre = gimnasioRepository.findByUsuarioAdmin_Id(e.getOrganizador().getId())
-                .map(Gimnasio::getNombre)
-                .orElse(null);
-
         return EventoResponse.builder()
                 .id(e.getId())
                 .nombre(e.getNombre())
@@ -174,7 +195,8 @@ public class EventoService {
                 .reglamentoUrl(e.getReglamentoUrl())
                 .organizadorId(e.getOrganizador().getId())
                 .organizadorNombre(e.getOrganizador().getNombre())
-                .gimnasioNombre(gimnasioNombre)
+                .gimnasioId(e.getGimnasio() != null ? e.getGimnasio().getId() : null)
+                .gimnasioNombre(e.getGimnasio() != null ? e.getGimnasio().getNombre() : null)
                 .build();
     }
 }

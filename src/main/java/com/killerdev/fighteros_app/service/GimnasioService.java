@@ -2,7 +2,6 @@ package com.killerdev.fighteros_app.service;
 
 import com.killerdev.fighteros_app.dto.gimnasio.GimnasioCreateRequest;
 import com.killerdev.fighteros_app.dto.gimnasio.GimnasioMioResponse;
-import com.killerdev.fighteros_app.exception.DuplicateResourceException;
 import com.killerdev.fighteros_app.exception.ResourceNotFoundException;
 import com.killerdev.fighteros_app.model.enums.RolUsuarioEnum;
 import com.killerdev.fighteros_app.model.identidad.Gimnasio;
@@ -40,10 +39,6 @@ public class GimnasioService {
 
     @Transactional
     public GimnasioMioResponse crear(GimnasioCreateRequest request, UUID usuarioAutenticadoId) {
-        if (gimnasioRepository.findByUsuarioAdmin_Id(usuarioAutenticadoId).isPresent()) {
-            throw new DuplicateResourceException("Ya tienes un gimnasio registrado");
-        }
-
         Usuario usuario = usuarioRepository.findById(usuarioAutenticadoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
@@ -65,10 +60,11 @@ public class GimnasioService {
     }
 
     @Transactional(readOnly = true)
-    public GimnasioMioResponse obtenerMio(UUID usuarioAutenticadoId) {
-        Gimnasio gimnasio = gimnasioRepository.findByUsuarioAdmin_Id(usuarioAutenticadoId)
-                .orElseThrow(() -> new ResourceNotFoundException("No tienes un gimnasio registrado"));
-        return aResponse(gimnasio, obtenerRoles(usuarioAutenticadoId));
+    public List<GimnasioMioResponse> obtenerMios(UUID usuarioAutenticadoId) {
+        List<String> roles = obtenerRoles(usuarioAutenticadoId);
+        return gimnasioRepository.findAllByUsuarioAdmin_Id(usuarioAutenticadoId).stream()
+                .map(gimnasio -> aResponse(gimnasio, roles))
+                .toList();
     }
 
     private void agregarRolSiFalta(Usuario usuario, UUID usuarioId) {
