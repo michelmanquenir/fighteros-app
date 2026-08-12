@@ -1,5 +1,6 @@
 package com.killerdev.fighteros_app.service;
 
+import com.killerdev.fighteros_app.dto.evento.EventoArchivoResponse;
 import com.killerdev.fighteros_app.dto.evento.EventoCreateRequest;
 import com.killerdev.fighteros_app.dto.evento.EventoResponse;
 import com.killerdev.fighteros_app.dto.evento.EventoUpdateRequest;
@@ -18,11 +19,13 @@ import com.killerdev.fighteros_app.repository.identidad.GimnasioRepository;
 import com.killerdev.fighteros_app.repository.identidad.RegionRepository;
 import com.killerdev.fighteros_app.repository.identidad.UsuarioRepository;
 import com.killerdev.fighteros_app.repository.identidad.UsuarioRolRepository;
+import com.killerdev.fighteros_app.storage.StorageService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,17 +40,25 @@ public class EventoService {
     private final RegionRepository regionRepository;
     private final UsuarioRepository usuarioRepository;
     private final UsuarioRolRepository usuarioRolRepository;
+    private final StorageService storageService;
 
     public EventoService(EventoRepository eventoRepository,
                           GimnasioRepository gimnasioRepository,
                           RegionRepository regionRepository,
                           UsuarioRepository usuarioRepository,
-                          UsuarioRolRepository usuarioRolRepository) {
+                          UsuarioRolRepository usuarioRolRepository,
+                          StorageService storageService) {
         this.eventoRepository = eventoRepository;
         this.gimnasioRepository = gimnasioRepository;
         this.regionRepository = regionRepository;
         this.usuarioRepository = usuarioRepository;
         this.usuarioRolRepository = usuarioRolRepository;
+        this.storageService = storageService;
+    }
+
+    public EventoArchivoResponse subirArchivo(MultipartFile archivo, UUID usuarioAutenticadoId) {
+        String url = storageService.subirArchivo(archivo, "eventos/" + usuarioAutenticadoId);
+        return EventoArchivoResponse.builder().url(url).build();
     }
 
     public Page<EventoResponse> listar(Short regionId, TipoEventoEnum tipo, EstadoEventoEnum estado,

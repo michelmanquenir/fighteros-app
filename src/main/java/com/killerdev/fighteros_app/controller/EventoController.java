@@ -1,5 +1,6 @@
 package com.killerdev.fighteros_app.controller;
 
+import com.killerdev.fighteros_app.dto.evento.EventoArchivoResponse;
 import com.killerdev.fighteros_app.dto.evento.EventoCreateRequest;
 import com.killerdev.fighteros_app.dto.evento.EventoResponse;
 import com.killerdev.fighteros_app.dto.evento.EventoUpdateRequest;
@@ -19,7 +20,9 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
@@ -65,5 +68,12 @@ public class EventoController {
                                       @Valid @RequestBody EventoUpdateRequest request,
                                       @AuthenticationPrincipal CustomUserDetails principal) {
         return eventoService.actualizar(id, request, principal.getId());
+    }
+
+    @PostMapping(value = "/archivos", consumes = "multipart/form-data")
+    @PreAuthorize("hasRole('GIMNASIO_ADMIN') or hasRole('ADMIN')")
+    public EventoArchivoResponse subirArchivo(@RequestPart("archivo") MultipartFile archivo,
+                                               @AuthenticationPrincipal CustomUserDetails principal) {
+        return eventoService.subirArchivo(archivo, principal.getId());
     }
 }

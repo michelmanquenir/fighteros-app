@@ -15,7 +15,7 @@ import java.util.UUID;
 public class StorageService {
 
     private static final Set<String> TIPOS_PERMITIDOS = Set.of(
-            "image/jpeg", "image/png", "image/webp", "video/mp4", "video/quicktime"
+            "image/jpeg", "image/png", "image/webp", "video/mp4", "video/quicktime", "application/pdf"
     );
 
     private final RestClient restClient = RestClient.create();
