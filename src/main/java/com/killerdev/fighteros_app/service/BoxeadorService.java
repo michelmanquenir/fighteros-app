@@ -119,8 +119,13 @@ public class BoxeadorService {
             filtros.add((root, query, cb) -> cb.equal(root.get("estadoDeportivo"), estado));
         }
         if (q != null && !q.isBlank()) {
-            String patron = "%" + q.trim().toLowerCase() + "%";
-            filtros.add((root, query, cb) -> cb.like(cb.lower(root.get("usuario").get("nombre")), patron));
+            UUID idBuscado = parsearUuid(q.trim());
+            if (idBuscado != null) {
+                filtros.add((root, query, cb) -> cb.equal(root.get("id"), idBuscado));
+            } else {
+                String patron = "%" + q.trim().toLowerCase() + "%";
+                filtros.add((root, query, cb) -> cb.like(cb.lower(root.get("usuario").get("nombre")), patron));
+            }
         }
         Specification<Boxeador> spec = Specification.allOf(filtros);
         return boxeadorRepository.findAll(spec, pageable).map(this::aResumen);
@@ -324,6 +329,14 @@ public class BoxeadorService {
     private Region resolverRegion(Short regionId) {
         return regionRepository.findById(regionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Región no encontrada"));
+    }
+
+    private UUID parsearUuid(String valor) {
+        try {
+            return UUID.fromString(valor);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     private BoxeadorResumenResponse aResumen(Boxeador b) {
