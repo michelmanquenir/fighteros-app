@@ -57,7 +57,21 @@ public class EventoInscripcionService {
         Boxeador boxeador = boxeadorRepository.findById(request.getBoxeadorId())
                 .orElseThrow(() -> new ResourceNotFoundException("Boxeador no encontrado"));
 
-        Gimnasio gimnasio = verificarPropietarioDelGimnasioDelBoxeador(boxeador, usuarioAutenticadoId);
+        Gimnasio gimnasioDelBoxeador = boxeador.getGimnasio();
+        if (gimnasioDelBoxeador == null) {
+            throw new AccesoDenegadoException("Este boxeador no pertenece a ningún gimnasio");
+        }
+
+        boolean esOrganizador = evento.getOrganizador().getId().equals(usuarioAutenticadoId);
+        boolean esDueñoDelGimnasioDelBoxeador = esDueñoDeGimnasio(usuarioAutenticadoId, gimnasioDelBoxeador.getId());
+
+        // El organizador puede armar el cartel completo con boxeadores de
+        // cualquier gimnasio (veladas grandes); un dueño de gimnasio siempre
+        // puede inscribir a los suyos, sea o no el organizador del evento.
+        if (!esAdmin(usuarioAutenticadoId) && !esOrganizador && !esDueñoDelGimnasioDelBoxeador) {
+            throw new AccesoDenegadoException(
+                    "Solo el organizador del evento o el dueño del gimnasio del boxeador pueden inscribirlo");
+        }
 
         if (inscripcionRepository.existsByEvento_IdAndBoxeador_Id(eventoId, boxeador.getId())) {
             throw new DuplicateResourceException("Este boxeador ya está inscrito en el evento");
@@ -66,7 +80,7 @@ public class EventoInscripcionService {
         EventoInscripcion inscripcion = EventoInscripcion.builder()
                 .evento(evento)
                 .boxeador(boxeador)
-                .gimnasio(gimnasio)
+                .gimnasio(gimnasioDelBoxeador)
                 .build();
         return aResponse(inscripcionRepository.save(inscripcion));
     }
@@ -76,30 +90,24 @@ public class EventoInscripcionService {
         EventoInscripcion inscripcion = inscripcionRepository.findByEvento_IdAndBoxeador_Id(eventoId, boxeadorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Inscripción no encontrada"));
 
-        boolean esAdmin = usuarioRolRepository.findByUsuario_Id(usuarioAutenticadoId).stream()
-                .anyMatch(ur -> ur.getId().getRol() == RolUsuarioEnum.admin);
         boolean esOrganizador = inscripcion.getEvento().getOrganizador().getId().equals(usuarioAutenticadoId);
-        boolean esDueñoDelGimnasio = gimnasioRepository.findAllByUsuarioAdmin_Id(usuarioAutenticadoId).stream()
-                .anyMatch(g -> g.getId().equals(inscripcion.getGimnasio().getId()));
+        boolean esDueñoDelGimnasio = esDueñoDeGimnasio(usuarioAutenticadoId, inscripcion.getGimnasio().getId());
 
-        if (!esAdmin && !esOrganizador && !esDueñoDelGimnasio) {
+        if (!esAdmin(usuarioAutenticadoId) && !esOrganizador && !esDueñoDelGimnasio) {
             throw new AccesoDenegadoException("No puedes retirar esta inscripción");
         }
 
         inscripcionRepository.delete(inscripcion);
     }
 
-    private Gimnasio verificarPropietarioDelGimnasioDelBoxeador(Boxeador boxeador, UUID usuarioAutenticadoId) {
-        Gimnasio gimnasioDelBoxeador = boxeador.getGimnasio();
-        if (gimnasioDelBoxeador == null) {
-            throw new AccesoDenegadoException("Este boxeador no pertenece a ningún gimnasio");
-        }
-        boolean esDueño = gimnasioRepository.findAllByUsuarioAdmin_Id(usuarioAutenticadoId).stream()
-                .anyMatch(g -> g.getId().equals(gimnasioDelBoxeador.getId()));
-        if (!esDueño) {
-            throw new AccesoDenegadoException("Solo puedes inscribir boxeadores de tu propio gimnasio");
-        }
-        return gimnasioDelBoxeador;
+    private boolean esAdmin(UUID usuarioId) {
+        return usuarioRolRepository.findByUsuario_Id(usuarioId).stream()
+                .anyMatch(ur -> ur.getId().getRol() == RolUsuarioEnum.admin);
+    }
+
+    private boolean esDueñoDeGimnasio(UUID usuarioId, UUID gimnasioId) {
+        return gimnasioRepository.findAllByUsuarioAdmin_Id(usuarioId).stream()
+                .anyMatch(g -> g.getId().equals(gimnasioId));
     }
 
     private EventoInscripcionResponse aResponse(EventoInscripcion i) {
