@@ -1,6 +1,7 @@
 package com.killerdev.fighteros_app.service;
 
 import com.killerdev.fighteros_app.dto.social.EstadoSeguimientoResponse;
+import com.killerdev.fighteros_app.dto.social.SeguidorPerfilResponse;
 import com.killerdev.fighteros_app.dto.social.SolicitudSeguimientoResponse;
 import com.killerdev.fighteros_app.exception.AccesoDenegadoException;
 import com.killerdev.fighteros_app.exception.OperacionInvalidaException;
@@ -92,6 +93,20 @@ public class SeguidorService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<SeguidorPerfilResponse> listarSeguidores(UUID usuarioId) {
+        return seguidorRepository.findByIdSeguidoIdAndEstado(usuarioId, EstadoSeguimientoEnum.aceptado).stream()
+                .map(s -> aPerfil(s.getSeguidor()))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<SeguidorPerfilResponse> listarSeguidos(UUID usuarioId) {
+        return seguidorRepository.findByIdSeguidorIdAndEstado(usuarioId, EstadoSeguimientoEnum.aceptado).stream()
+                .map(s -> aPerfil(s.getSeguido()))
+                .toList();
+    }
+
     @Transactional
     public void aceptarSolicitud(UUID usuarioAutenticadoId, UUID seguidorId) {
         Seguidor solicitud = seguidorRepository.findByIdSeguidorIdAndIdSeguidoId(seguidorId, usuarioAutenticadoId)
@@ -117,6 +132,15 @@ public class SeguidorService {
         return boxeadorRepository.findById(usuarioId)
                 .map(Boxeador::getPerfilPublico)
                 .orElse(true);
+    }
+
+    private SeguidorPerfilResponse aPerfil(Usuario usuario) {
+        return SeguidorPerfilResponse.builder()
+                .usuarioId(usuario.getId())
+                .nombre(usuario.getNombre())
+                .avatarUrl(usuario.getAvatarUrl())
+                .esBoxeador(boxeadorRepository.existsById(usuario.getId()))
+                .build();
     }
 
     private Usuario buscarUsuario(UUID usuarioId) {

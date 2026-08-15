@@ -1,6 +1,7 @@
 package com.killerdev.fighteros_app.controller;
 
 import com.killerdev.fighteros_app.dto.social.EstadoSeguimientoResponse;
+import com.killerdev.fighteros_app.dto.social.SeguidorPerfilResponse;
 import com.killerdev.fighteros_app.dto.social.SolicitudSeguimientoResponse;
 import com.killerdev.fighteros_app.security.CustomUserDetails;
 import com.killerdev.fighteros_app.service.SeguidorService;
@@ -48,6 +49,16 @@ public class SeguidorController {
     @GetMapping("/solicitudes")
     public List<SolicitudSeguimientoResponse> listarSolicitudes(@AuthenticationPrincipal CustomUserDetails principal) {
         return seguidorService.listarSolicitudesPendientes(principal.getId());
+    }
+
+    @GetMapping("/mis-seguidores")
+    public List<SeguidorPerfilResponse> listarMisSeguidores(@AuthenticationPrincipal CustomUserDetails principal) {
+        return seguidorService.listarSeguidores(principal.getId());
+    }
+
+    @GetMapping("/mis-seguidos")
+    public List<SeguidorPerfilResponse> listarMisSeguidos(@AuthenticationPrincipal CustomUserDetails principal) {
+        return seguidorService.listarSeguidos(principal.getId());
     }
 
     @PostMapping("/solicitudes/{seguidorId}/aceptar")

@@ -14,5 +14,7 @@ public interface SeguidorRepository extends JpaRepository<Seguidor, SeguidorId> 
 
     List<Seguidor> findByIdSeguidoIdAndEstado(UUID seguidoId, EstadoSeguimientoEnum estado);
 
+    List<Seguidor> findByIdSeguidorIdAndEstado(UUID seguidorId, EstadoSeguimientoEnum estado);
+
     long countByIdSeguidoIdAndEstado(UUID seguidoId, EstadoSeguimientoEnum estado);
 }
