@@ -1,7 +1,6 @@
 package com.killerdev.fighteros_app.model.evento;
 
-import com.killerdev.fighteros_app.model.deportivo.Boxeador;
-import com.killerdev.fighteros_app.model.identidad.Gimnasio;
+import com.killerdev.fighteros_app.model.deportivo.CategoriaPeso;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -22,14 +21,14 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "evento_inscripciones")
+@Table(name = "evento_torneos")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class EventoInscripcion {
+public class EventoTorneo {
 
     @Id
     @EqualsAndHashCode.Include
@@ -40,17 +39,12 @@ public class EventoInscripcion {
     @JoinColumn(name = "evento_id", nullable = false)
     private Evento evento;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "boxeador_id", nullable = false)
-    private Boxeador boxeador;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "gimnasio_id", nullable = false)
-    private Gimnasio gimnasio;
+    @Column(nullable = false)
+    private String nombre;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "torneo_id")
-    private EventoTorneo torneo;
+    @JoinColumn(name = "categoria_id")
+    private CategoriaPeso categoria;
 
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private OffsetDateTime createdAt;

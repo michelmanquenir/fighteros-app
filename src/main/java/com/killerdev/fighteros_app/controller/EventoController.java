@@ -1,5 +1,6 @@
 package com.killerdev.fighteros_app.controller;
 
+import com.killerdev.fighteros_app.dto.evento.AsignarTorneoRequest;
 import com.killerdev.fighteros_app.dto.evento.EventoArchivoResponse;
 import com.killerdev.fighteros_app.dto.evento.EventoCreateRequest;
 import com.killerdev.fighteros_app.dto.evento.EventoInscripcionCreateRequest;
@@ -104,5 +105,13 @@ public class EventoController {
                                                      @AuthenticationPrincipal CustomUserDetails principal) {
         inscripcionService.retirar(id, boxeadorId, principal.getId());
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}/inscripciones/{boxeadorId}/torneo")
+    public EventoInscripcionResponse asignarTorneo(@PathVariable UUID id,
+                                                     @PathVariable UUID boxeadorId,
+                                                     @RequestBody AsignarTorneoRequest request,
+                                                     @AuthenticationPrincipal CustomUserDetails principal) {
+        return inscripcionService.asignarTorneo(id, boxeadorId, request.getTorneoId(), principal.getId());
     }
 }

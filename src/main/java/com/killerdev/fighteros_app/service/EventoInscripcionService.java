@@ -4,15 +4,18 @@ import com.killerdev.fighteros_app.dto.evento.EventoInscripcionCreateRequest;
 import com.killerdev.fighteros_app.dto.evento.EventoInscripcionResponse;
 import com.killerdev.fighteros_app.exception.AccesoDenegadoException;
 import com.killerdev.fighteros_app.exception.DuplicateResourceException;
+import com.killerdev.fighteros_app.exception.OperacionInvalidaException;
 import com.killerdev.fighteros_app.exception.ResourceNotFoundException;
 import com.killerdev.fighteros_app.model.deportivo.Boxeador;
 import com.killerdev.fighteros_app.model.enums.RolUsuarioEnum;
 import com.killerdev.fighteros_app.model.evento.Evento;
 import com.killerdev.fighteros_app.model.evento.EventoInscripcion;
+import com.killerdev.fighteros_app.model.evento.EventoTorneo;
 import com.killerdev.fighteros_app.model.identidad.Gimnasio;
 import com.killerdev.fighteros_app.repository.deportivo.BoxeadorRepository;
 import com.killerdev.fighteros_app.repository.evento.EventoInscripcionRepository;
 import com.killerdev.fighteros_app.repository.evento.EventoRepository;
+import com.killerdev.fighteros_app.repository.evento.EventoTorneoRepository;
 import com.killerdev.fighteros_app.repository.identidad.GimnasioRepository;
 import com.killerdev.fighteros_app.repository.identidad.UsuarioRolRepository;
 import org.springframework.stereotype.Service;
@@ -30,17 +33,20 @@ public class EventoInscripcionService {
     private final BoxeadorRepository boxeadorRepository;
     private final GimnasioRepository gimnasioRepository;
     private final UsuarioRolRepository usuarioRolRepository;
+    private final EventoTorneoRepository torneoRepository;
 
     public EventoInscripcionService(EventoInscripcionRepository inscripcionRepository,
                                      EventoRepository eventoRepository,
                                      BoxeadorRepository boxeadorRepository,
                                      GimnasioRepository gimnasioRepository,
-                                     UsuarioRolRepository usuarioRolRepository) {
+                                     UsuarioRolRepository usuarioRolRepository,
+                                     EventoTorneoRepository torneoRepository) {
         this.inscripcionRepository = inscripcionRepository;
         this.eventoRepository = eventoRepository;
         this.boxeadorRepository = boxeadorRepository;
         this.gimnasioRepository = gimnasioRepository;
         this.usuarioRolRepository = usuarioRolRepository;
+        this.torneoRepository = torneoRepository;
     }
 
     public List<EventoInscripcionResponse> listar(UUID eventoId) {
@@ -77,11 +83,26 @@ public class EventoInscripcionService {
             throw new DuplicateResourceException("Este boxeador ya está inscrito en el evento");
         }
 
+        EventoTorneo torneo = resolverTorneoDelEvento(eventoId, request.getTorneoId());
+
         EventoInscripcion inscripcion = EventoInscripcion.builder()
                 .evento(evento)
                 .boxeador(boxeador)
                 .gimnasio(gimnasioDelBoxeador)
+                .torneo(torneo)
                 .build();
+        return aResponse(inscripcionRepository.save(inscripcion));
+    }
+
+    @Transactional
+    public EventoInscripcionResponse asignarTorneo(UUID eventoId, UUID boxeadorId, UUID torneoId,
+                                                     UUID usuarioAutenticadoId) {
+        EventoInscripcion inscripcion = inscripcionRepository.findByEvento_IdAndBoxeador_Id(eventoId, boxeadorId)
+                .orElseThrow(() -> new ResourceNotFoundException("Inscripción no encontrada"));
+
+        verificarPuedeGestionar(inscripcion, usuarioAutenticadoId);
+
+        inscripcion.setTorneo(resolverTorneoDelEvento(eventoId, torneoId));
         return aResponse(inscripcionRepository.save(inscripcion));
     }
 
@@ -90,14 +111,30 @@ public class EventoInscripcionService {
         EventoInscripcion inscripcion = inscripcionRepository.findByEvento_IdAndBoxeador_Id(eventoId, boxeadorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Inscripción no encontrada"));
 
+        verificarPuedeGestionar(inscripcion, usuarioAutenticadoId);
+
+        inscripcionRepository.delete(inscripcion);
+    }
+
+    private void verificarPuedeGestionar(EventoInscripcion inscripcion, UUID usuarioAutenticadoId) {
         boolean esOrganizador = inscripcion.getEvento().getOrganizador().getId().equals(usuarioAutenticadoId);
         boolean esDueñoDelGimnasio = esDueñoDeGimnasio(usuarioAutenticadoId, inscripcion.getGimnasio().getId());
 
         if (!esAdmin(usuarioAutenticadoId) && !esOrganizador && !esDueñoDelGimnasio) {
-            throw new AccesoDenegadoException("No puedes retirar esta inscripción");
+            throw new AccesoDenegadoException("No puedes modificar esta inscripción");
         }
+    }
 
-        inscripcionRepository.delete(inscripcion);
+    private EventoTorneo resolverTorneoDelEvento(UUID eventoId, UUID torneoId) {
+        if (torneoId == null) {
+            return null;
+        }
+        EventoTorneo torneo = torneoRepository.findById(torneoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Torneo no encontrado"));
+        if (!torneo.getEvento().getId().equals(eventoId)) {
+            throw new OperacionInvalidaException("Ese torneo no pertenece a este evento");
+        }
+        return torneo;
     }
 
     private boolean esAdmin(UUID usuarioId) {
@@ -120,6 +157,8 @@ public class EventoInscripcionService {
                 .categoriaNombre(b.getCategoria() != null ? b.getCategoria().getNombre() : null)
                 .gimnasioId(i.getGimnasio().getId())
                 .gimnasioNombre(i.getGimnasio().getNombre())
+                .torneoId(i.getTorneo() != null ? i.getTorneo().getId() : null)
+                .torneoNombre(i.getTorneo() != null ? i.getTorneo().getNombre() : null)
                 .fecha(i.getCreatedAt())
                 .build();
     }

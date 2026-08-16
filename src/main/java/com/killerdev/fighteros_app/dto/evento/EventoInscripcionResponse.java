@@ -19,5 +19,7 @@ public class EventoInscripcionResponse {
     private String categoriaNombre;
     private UUID gimnasioId;
     private String gimnasioNombre;
+    private UUID torneoId;
+    private String torneoNombre;
     private OffsetDateTime fecha;
 }

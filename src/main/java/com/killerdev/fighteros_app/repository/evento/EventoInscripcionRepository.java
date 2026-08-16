@@ -13,4 +13,6 @@ public interface EventoInscripcionRepository extends JpaRepository<EventoInscrip
     Optional<EventoInscripcion> findByEvento_IdAndBoxeador_Id(UUID eventoId, UUID boxeadorId);
 
     boolean existsByEvento_IdAndBoxeador_Id(UUID eventoId, UUID boxeadorId);
+
+    long countByTorneo_Id(UUID torneoId);
 }
