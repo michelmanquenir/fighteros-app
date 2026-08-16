@@ -4,6 +4,7 @@ import com.killerdev.fighteros_app.dto.boxeador.BoxeadorPerfilResponse;
 import com.killerdev.fighteros_app.dto.boxeador.BoxeadorResumenResponse;
 import com.killerdev.fighteros_app.dto.boxeador.BoxeadorUpdateRequest;
 import com.killerdev.fighteros_app.dto.boxeador.CampeonatoResponse;
+import com.killerdev.fighteros_app.dto.boxeador.CompatibilidadResponse;
 import com.killerdev.fighteros_app.dto.boxeador.CopaResponse;
 import com.killerdev.fighteros_app.dto.boxeador.EstadisticasResponse;
 import com.killerdev.fighteros_app.dto.boxeador.MedallaResponse;
@@ -13,6 +14,7 @@ import com.killerdev.fighteros_app.dto.boxeador.PeleaResumenResponse;
 import com.killerdev.fighteros_app.dto.boxeador.PesoPactadoRequest;
 import com.killerdev.fighteros_app.dto.boxeador.PesoPactadoResponse;
 import com.killerdev.fighteros_app.exception.AccesoDenegadoException;
+import com.killerdev.fighteros_app.exception.OperacionInvalidaException;
 import com.killerdev.fighteros_app.exception.ResourceNotFoundException;
 import com.killerdev.fighteros_app.model.deportivo.Boxeador;
 import com.killerdev.fighteros_app.model.deportivo.BoxeadorEstadisticas;
@@ -21,6 +23,7 @@ import com.killerdev.fighteros_app.model.deportivo.CategoriaPeso;
 import com.killerdev.fighteros_app.model.deportivo.Entrenador;
 import com.killerdev.fighteros_app.model.enums.EstadoDeportivoEnum;
 import com.killerdev.fighteros_app.model.enums.EstadoPeleaEnum;
+import com.killerdev.fighteros_app.model.enums.NivelProgresionEnum;
 import com.killerdev.fighteros_app.model.enums.ResultadoPeleaEnum;
 import com.killerdev.fighteros_app.model.enums.TipoMultimediaEnum;
 import com.killerdev.fighteros_app.model.identidad.Gimnasio;
@@ -48,6 +51,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.ArrayList;
@@ -175,6 +179,75 @@ public class BoxeadorService {
                 .orElseGet(() -> EstadisticasResponse.builder()
                         .peleasTotales(0L).victorias(0L).derrotas(0L).empates(0L)
                         .victoriasKo(0L).victoriasDecision(0L).build());
+    }
+
+    public CompatibilidadResponse compararBoxeadores(UUID idA, UUID idB) {
+        if (idA.equals(idB)) {
+            throw new OperacionInvalidaException("Selecciona dos boxeadores distintos");
+        }
+        Boxeador a = buscarBoxeador(idA);
+        Boxeador b = buscarBoxeador(idB);
+
+        long peleasA = obtenerPeleasTotales(idA);
+        long peleasB = obtenerPeleasTotales(idB);
+        boolean mismaCategoria = a.getCategoria() != null && b.getCategoria() != null
+                && a.getCategoria().getId().equals(b.getCategoria().getId());
+
+        int puntajePeso = calcularPuntajePeso(a, b, mismaCategoria);
+        int puntajeExperiencia = calcularPuntajeExperiencia(peleasA, peleasB);
+        int puntajeNivel = calcularPuntajeNivel(a.getNivelProgresion(), b.getNivelProgresion());
+        int puntajeGeneral = Math.round(puntajePeso * 0.4f + puntajeExperiencia * 0.35f + puntajeNivel * 0.25f);
+
+        return CompatibilidadResponse.builder()
+                .boxeadorAId(a.getId())
+                .boxeadorANombre(a.getUsuario().getNombre())
+                .boxeadorBId(b.getId())
+                .boxeadorBNombre(b.getUsuario().getNombre())
+                .puntajeGeneral(puntajeGeneral)
+                .puntajePeso(puntajePeso)
+                .pesoA(a.getPesoActual())
+                .pesoB(b.getPesoActual())
+                .mismaCategoria(mismaCategoria)
+                .categoriaANombre(a.getCategoria() != null ? a.getCategoria().getNombre() : null)
+                .categoriaBNombre(b.getCategoria() != null ? b.getCategoria().getNombre() : null)
+                .puntajeExperiencia(puntajeExperiencia)
+                .peleasA(peleasA)
+                .peleasB(peleasB)
+                .puntajeNivel(puntajeNivel)
+                .nivelANombre(a.getNivelProgresion().name())
+                .nivelBNombre(b.getNivelProgresion().name())
+                .build();
+    }
+
+    private long obtenerPeleasTotales(UUID boxeadorId) {
+        return boxeadorEstadisticasRepository.findById(boxeadorId)
+                .map(BoxeadorEstadisticas::getPeleasTotales)
+                .orElse(0L);
+    }
+
+    private int calcularPuntajePeso(Boxeador a, Boxeador b, boolean mismaCategoria) {
+        if (a.getPesoActual() == null || b.getPesoActual() == null) {
+            return mismaCategoria ? 100 : 50;
+        }
+        BigDecimal diferencia = a.getPesoActual().subtract(b.getPesoActual()).abs();
+        // Cada kg de diferencia resta 15 puntos; distinta categoría resta 30 más.
+        int puntaje = 100 - diferencia.multiply(BigDecimal.valueOf(15)).intValue();
+        if (!mismaCategoria) {
+            puntaje -= 30;
+        }
+        return Math.max(0, Math.min(100, puntaje));
+    }
+
+    private int calcularPuntajeExperiencia(long peleasA, long peleasB) {
+        long maxPeleas = Math.max(Math.max(peleasA, peleasB), 1);
+        long diferencia = Math.abs(peleasA - peleasB);
+        double ratio = (double) diferencia / maxPeleas;
+        return (int) Math.round(100 * (1 - ratio));
+    }
+
+    private int calcularPuntajeNivel(NivelProgresionEnum nivelA, NivelProgresionEnum nivelB) {
+        int distancia = Math.abs(nivelA.ordinal() - nivelB.ordinal());
+        return Math.max(0, 100 - distancia * 25);
     }
 
     public List<PeleaResumenResponse> obtenerHistorial(UUID id) {

@@ -4,6 +4,7 @@ import com.killerdev.fighteros_app.dto.boxeador.BoxeadorPerfilResponse;
 import com.killerdev.fighteros_app.dto.boxeador.BoxeadorResumenResponse;
 import com.killerdev.fighteros_app.dto.boxeador.BoxeadorUpdateRequest;
 import com.killerdev.fighteros_app.dto.boxeador.CampeonatoResponse;
+import com.killerdev.fighteros_app.dto.boxeador.CompatibilidadResponse;
 import com.killerdev.fighteros_app.dto.boxeador.CopaResponse;
 import com.killerdev.fighteros_app.dto.boxeador.EstadisticasResponse;
 import com.killerdev.fighteros_app.dto.boxeador.MedallaResponse;
@@ -58,6 +59,11 @@ public class BoxeadorController {
     @GetMapping("/{id}")
     public BoxeadorPerfilResponse obtenerPerfil(@PathVariable UUID id) {
         return boxeadorService.obtenerPerfil(id);
+    }
+
+    @GetMapping("/comparar")
+    public CompatibilidadResponse comparar(@RequestParam UUID aId, @RequestParam UUID bId) {
+        return boxeadorService.compararBoxeadores(aId, bId);
     }
 
     @PutMapping("/{id}")
