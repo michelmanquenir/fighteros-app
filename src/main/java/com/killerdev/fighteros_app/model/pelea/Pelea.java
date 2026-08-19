@@ -9,6 +9,7 @@ import com.killerdev.fighteros_app.model.enums.MetodoVictoriaEnum;
 import com.killerdev.fighteros_app.model.enums.ResultadoPeleaEnum;
 import com.killerdev.fighteros_app.model.evento.Evento;
 import com.killerdev.fighteros_app.model.evento.EventoRing;
+import com.killerdev.fighteros_app.model.evento.EventoTorneo;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -65,6 +66,13 @@ public class Pelea {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "categoria_id")
     private CategoriaPeso categoria;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "torneo_id")
+    private EventoTorneo torneo;
+
+    @Column(nullable = false)
+    private Short ronda;
 
     @Column(name = "peso_pactado")
     private BigDecimal pesoPactado;
