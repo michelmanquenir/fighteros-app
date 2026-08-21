@@ -2,6 +2,7 @@ package com.killerdev.fighteros_app.controller;
 
 import com.killerdev.fighteros_app.dto.evento.EventoPeleaCreateRequest;
 import com.killerdev.fighteros_app.dto.evento.EventoPeleaResponse;
+import com.killerdev.fighteros_app.dto.evento.EventoPeleaResultadoRequest;
 import com.killerdev.fighteros_app.security.CustomUserDetails;
 import com.killerdev.fighteros_app.service.EventoPeleaService;
 import jakarta.validation.Valid;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -38,6 +40,14 @@ public class EventoPeleaController {
                                       @Valid @RequestBody EventoPeleaCreateRequest request,
                                       @AuthenticationPrincipal CustomUserDetails principal) {
         return peleaService.crear(eventoId, request, principal.getId());
+    }
+
+    @PutMapping("/{peleaId}/resultado")
+    public EventoPeleaResponse registrarResultado(@PathVariable UUID eventoId,
+                                                    @PathVariable UUID peleaId,
+                                                    @RequestBody EventoPeleaResultadoRequest request,
+                                                    @AuthenticationPrincipal CustomUserDetails principal) {
+        return peleaService.registrarResultado(eventoId, peleaId, request, principal.getId());
     }
 
     @DeleteMapping("/{peleaId}")

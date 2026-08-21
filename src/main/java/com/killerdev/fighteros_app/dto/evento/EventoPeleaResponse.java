@@ -23,4 +23,5 @@ public class EventoPeleaResponse {
     private String torneoNombre;
     private short ronda;
     private EstadoPeleaEnum estado;
+    private UUID ganadorId;
 }

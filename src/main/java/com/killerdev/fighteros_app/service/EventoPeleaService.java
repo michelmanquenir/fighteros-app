@@ -2,12 +2,14 @@ package com.killerdev.fighteros_app.service;
 
 import com.killerdev.fighteros_app.dto.evento.EventoPeleaCreateRequest;
 import com.killerdev.fighteros_app.dto.evento.EventoPeleaResponse;
+import com.killerdev.fighteros_app.dto.evento.EventoPeleaResultadoRequest;
 import com.killerdev.fighteros_app.exception.AccesoDenegadoException;
 import com.killerdev.fighteros_app.exception.OperacionInvalidaException;
 import com.killerdev.fighteros_app.exception.ResourceNotFoundException;
 import com.killerdev.fighteros_app.model.deportivo.Boxeador;
 import com.killerdev.fighteros_app.model.enums.EstadoPeleaEnum;
 import com.killerdev.fighteros_app.model.enums.EstadoValidacionEnum;
+import com.killerdev.fighteros_app.model.enums.ResultadoPeleaEnum;
 import com.killerdev.fighteros_app.model.enums.RolUsuarioEnum;
 import com.killerdev.fighteros_app.model.evento.Evento;
 import com.killerdev.fighteros_app.model.evento.EventoTorneo;
@@ -89,6 +91,33 @@ public class EventoPeleaService {
     }
 
     @Transactional
+    public EventoPeleaResponse registrarResultado(UUID eventoId, UUID peleaId, EventoPeleaResultadoRequest request,
+                                                    UUID usuarioAutenticadoId) {
+        Pelea pelea = peleaRepository.findById(peleaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Pelea no encontrada"));
+        if (!pelea.getEvento().getId().equals(eventoId)) {
+            throw new ResourceNotFoundException("Pelea no encontrada");
+        }
+        verificarOrganizador(pelea.getEvento(), usuarioAutenticadoId);
+
+        UUID ganadorId = request.getGanadorId();
+        if (ganadorId == null) {
+            pelea.setResultado(null);
+            pelea.setEstado(EstadoPeleaEnum.programada);
+        } else if (ganadorId.equals(pelea.getBoxeadorA().getId())) {
+            pelea.setResultado(ResultadoPeleaEnum.victoria_a);
+            pelea.setEstado(EstadoPeleaEnum.realizada);
+        } else if (ganadorId.equals(pelea.getBoxeadorB().getId())) {
+            pelea.setResultado(ResultadoPeleaEnum.victoria_b);
+            pelea.setEstado(EstadoPeleaEnum.realizada);
+        } else {
+            throw new OperacionInvalidaException("El ganador debe ser uno de los dos peleadores de esta pelea");
+        }
+
+        return aResponse(peleaRepository.save(pelea));
+    }
+
+    @Transactional
     public void eliminar(UUID eventoId, UUID peleaId, UUID usuarioAutenticadoId) {
         Pelea pelea = peleaRepository.findById(peleaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Pelea no encontrada"));
@@ -122,6 +151,17 @@ public class EventoPeleaService {
                 .torneoNombre(p.getTorneo() != null ? p.getTorneo().getNombre() : null)
                 .ronda(p.getRonda())
                 .estado(p.getEstado())
+                .ganadorId(resolverGanadorId(p))
                 .build();
+    }
+
+    private UUID resolverGanadorId(Pelea p) {
+        if (p.getResultado() == ResultadoPeleaEnum.victoria_a) {
+            return p.getBoxeadorA().getId();
+        }
+        if (p.getResultado() == ResultadoPeleaEnum.victoria_b) {
+            return p.getBoxeadorB().getId();
+        }
+        return null;
     }
 }
