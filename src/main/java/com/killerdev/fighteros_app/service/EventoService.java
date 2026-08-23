@@ -8,6 +8,7 @@ import com.killerdev.fighteros_app.exception.AccesoDenegadoException;
 import com.killerdev.fighteros_app.exception.OperacionInvalidaException;
 import com.killerdev.fighteros_app.exception.ResourceNotFoundException;
 import com.killerdev.fighteros_app.model.enums.EstadoEventoEnum;
+import com.killerdev.fighteros_app.model.enums.ModalidadInscripcionEnum;
 import com.killerdev.fighteros_app.model.enums.RolUsuarioEnum;
 import com.killerdev.fighteros_app.model.enums.TipoEventoEnum;
 import com.killerdev.fighteros_app.model.evento.Evento;
@@ -102,6 +103,8 @@ public class EventoService {
                 .lugar(request.getLugar())
                 .region(resolverRegion(request.getRegionId()))
                 .cuposTotales(request.getCuposTotales())
+                .modalidad(request.getModalidad() != null ? request.getModalidad() : ModalidadInscripcionEnum.abierta)
+                .cuposPorGimnasio(request.getCuposPorGimnasio())
                 .reglamentoUrl(request.getReglamentoUrl())
                 .afichePosterUrl(request.getAfichePosterUrl())
                 .estado(EstadoEventoEnum.planificado)
@@ -134,6 +137,12 @@ public class EventoService {
         }
         if (request.getCuposTotales() != null) {
             evento.setCuposTotales(request.getCuposTotales());
+        }
+        if (request.getModalidad() != null) {
+            evento.setModalidad(request.getModalidad());
+        }
+        if (request.getCuposPorGimnasio() != null) {
+            evento.setCuposPorGimnasio(request.getCuposPorGimnasio());
         }
         if (request.getEstado() != null) {
             evento.setEstado(request.getEstado());
@@ -201,6 +210,8 @@ public class EventoService {
                 .regionId(e.getRegion() != null ? e.getRegion().getId() : null)
                 .regionNombre(e.getRegion() != null ? e.getRegion().getNombre() : null)
                 .cuposTotales(e.getCuposTotales())
+                .modalidad(e.getModalidad())
+                .cuposPorGimnasio(e.getCuposPorGimnasio())
                 .estado(e.getEstado())
                 .afichePosterUrl(e.getAfichePosterUrl())
                 .reglamentoUrl(e.getReglamentoUrl())

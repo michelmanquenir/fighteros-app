@@ -1,6 +1,7 @@
 package com.killerdev.fighteros_app.model.evento;
 
 import com.killerdev.fighteros_app.model.enums.EstadoEventoEnum;
+import com.killerdev.fighteros_app.model.enums.ModalidadInscripcionEnum;
 import com.killerdev.fighteros_app.model.enums.TipoEventoEnum;
 import com.killerdev.fighteros_app.model.identidad.Gimnasio;
 import com.killerdev.fighteros_app.model.identidad.Liga;
@@ -79,6 +80,13 @@ public class Evento {
 
     @Column(name = "cupos_totales")
     private Integer cuposTotales;
+
+    @Column(nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    private ModalidadInscripcionEnum modalidad;
+
+    @Column(name = "cupos_por_gimnasio")
+    private Integer cuposPorGimnasio;
 
     @Column(name = "cantidad_publico")
     private Integer cantidadPublico;

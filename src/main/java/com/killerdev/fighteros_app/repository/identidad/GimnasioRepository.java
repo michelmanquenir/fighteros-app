@@ -8,4 +8,6 @@ import java.util.UUID;
 
 public interface GimnasioRepository extends JpaRepository<Gimnasio, UUID> {
     List<Gimnasio> findAllByUsuarioAdmin_Id(UUID usuarioAdminId);
+
+    List<Gimnasio> findTop20ByNombreContainingIgnoreCaseOrderByNombreAsc(String nombre);
 }

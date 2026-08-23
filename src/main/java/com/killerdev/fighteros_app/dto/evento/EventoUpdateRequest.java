@@ -1,6 +1,7 @@
 package com.killerdev.fighteros_app.dto.evento;
 
 import com.killerdev.fighteros_app.model.enums.EstadoEventoEnum;
+import com.killerdev.fighteros_app.model.enums.ModalidadInscripcionEnum;
 import jakarta.validation.constraints.Positive;
 import lombok.Getter;
 import lombok.Setter;
@@ -21,6 +22,11 @@ public class EventoUpdateRequest {
 
     @Positive
     private Integer cuposTotales;
+
+    private ModalidadInscripcionEnum modalidad;
+
+    @Positive
+    private Integer cuposPorGimnasio;
 
     private EstadoEventoEnum estado;
 

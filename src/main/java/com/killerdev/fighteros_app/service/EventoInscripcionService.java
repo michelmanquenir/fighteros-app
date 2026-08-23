@@ -7,12 +7,15 @@ import com.killerdev.fighteros_app.exception.DuplicateResourceException;
 import com.killerdev.fighteros_app.exception.OperacionInvalidaException;
 import com.killerdev.fighteros_app.exception.ResourceNotFoundException;
 import com.killerdev.fighteros_app.model.deportivo.Boxeador;
+import com.killerdev.fighteros_app.model.enums.EstadoSolicitudEnum;
+import com.killerdev.fighteros_app.model.enums.ModalidadInscripcionEnum;
 import com.killerdev.fighteros_app.model.enums.RolUsuarioEnum;
 import com.killerdev.fighteros_app.model.evento.Evento;
 import com.killerdev.fighteros_app.model.evento.EventoInscripcion;
 import com.killerdev.fighteros_app.model.evento.EventoTorneo;
 import com.killerdev.fighteros_app.model.identidad.Gimnasio;
 import com.killerdev.fighteros_app.repository.deportivo.BoxeadorRepository;
+import com.killerdev.fighteros_app.repository.evento.EventoGimnasioInvitacionRepository;
 import com.killerdev.fighteros_app.repository.evento.EventoInscripcionRepository;
 import com.killerdev.fighteros_app.repository.evento.EventoRepository;
 import com.killerdev.fighteros_app.repository.evento.EventoTorneoRepository;
@@ -34,19 +37,22 @@ public class EventoInscripcionService {
     private final GimnasioRepository gimnasioRepository;
     private final UsuarioRolRepository usuarioRolRepository;
     private final EventoTorneoRepository torneoRepository;
+    private final EventoGimnasioInvitacionRepository invitacionRepository;
 
     public EventoInscripcionService(EventoInscripcionRepository inscripcionRepository,
                                      EventoRepository eventoRepository,
                                      BoxeadorRepository boxeadorRepository,
                                      GimnasioRepository gimnasioRepository,
                                      UsuarioRolRepository usuarioRolRepository,
-                                     EventoTorneoRepository torneoRepository) {
+                                     EventoTorneoRepository torneoRepository,
+                                     EventoGimnasioInvitacionRepository invitacionRepository) {
         this.inscripcionRepository = inscripcionRepository;
         this.eventoRepository = eventoRepository;
         this.boxeadorRepository = boxeadorRepository;
         this.gimnasioRepository = gimnasioRepository;
         this.usuarioRolRepository = usuarioRolRepository;
         this.torneoRepository = torneoRepository;
+        this.invitacionRepository = invitacionRepository;
     }
 
     public List<EventoInscripcionResponse> listar(UUID eventoId) {
@@ -69,18 +75,38 @@ public class EventoInscripcionService {
         }
 
         boolean esOrganizador = evento.getOrganizador().getId().equals(usuarioAutenticadoId);
+        boolean esAdmin = esAdmin(usuarioAutenticadoId);
         boolean esDueñoDelGimnasioDelBoxeador = esDueñoDeGimnasio(usuarioAutenticadoId, gimnasioDelBoxeador.getId());
 
         // El organizador puede armar el cartel completo con boxeadores de
         // cualquier gimnasio (veladas grandes); un dueño de gimnasio siempre
         // puede inscribir a los suyos, sea o no el organizador del evento.
-        if (!esAdmin(usuarioAutenticadoId) && !esOrganizador && !esDueñoDelGimnasioDelBoxeador) {
+        if (!esAdmin && !esOrganizador && !esDueñoDelGimnasioDelBoxeador) {
             throw new AccesoDenegadoException(
                     "Solo el organizador del evento o el dueño del gimnasio del boxeador pueden inscribirlo");
         }
 
         if (inscripcionRepository.existsByEvento_IdAndBoxeador_Id(eventoId, boxeador.getId())) {
             throw new DuplicateResourceException("Este boxeador ya está inscrito en el evento");
+        }
+
+        if (evento.getModalidad() == ModalidadInscripcionEnum.cerrada && !esOrganizador && !esAdmin) {
+            boolean invitacionAceptada = invitacionRepository.existsByEvento_IdAndGimnasio_IdAndEstado(
+                    eventoId, gimnasioDelBoxeador.getId(), EstadoSolicitudEnum.aceptada);
+            if (!invitacionAceptada) {
+                throw new AccesoDenegadoException(
+                        "Tu gimnasio necesita una invitación aceptada para inscribir peleadores en este evento");
+            }
+        }
+
+        if (evento.getCuposTotales() != null
+                && inscripcionRepository.countByEvento_Id(eventoId) >= evento.getCuposTotales()) {
+            throw new OperacionInvalidaException("Este evento ya alcanzó su cupo total de inscritos");
+        }
+        if (evento.getCuposPorGimnasio() != null
+                && inscripcionRepository.countByEvento_IdAndGimnasio_Id(eventoId, gimnasioDelBoxeador.getId())
+                    >= evento.getCuposPorGimnasio()) {
+            throw new OperacionInvalidaException("Tu gimnasio ya alcanzó el cupo permitido para este evento");
         }
 
         EventoTorneo torneo = resolverTorneoDelEvento(eventoId, request.getTorneoId());

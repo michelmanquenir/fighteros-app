@@ -2,6 +2,7 @@ package com.killerdev.fighteros_app.service;
 
 import com.killerdev.fighteros_app.dto.gimnasio.GimnasioCreateRequest;
 import com.killerdev.fighteros_app.dto.gimnasio.GimnasioMioResponse;
+import com.killerdev.fighteros_app.dto.gimnasio.GimnasioResumenResponse;
 import com.killerdev.fighteros_app.exception.ResourceNotFoundException;
 import com.killerdev.fighteros_app.model.enums.RolUsuarioEnum;
 import com.killerdev.fighteros_app.model.identidad.Gimnasio;
@@ -64,6 +65,20 @@ public class GimnasioService {
         List<String> roles = obtenerRoles(usuarioAutenticadoId);
         return gimnasioRepository.findAllByUsuarioAdmin_Id(usuarioAutenticadoId).stream()
                 .map(gimnasio -> aResponse(gimnasio, roles))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<GimnasioResumenResponse> buscar(String q) {
+        if (q == null || q.trim().length() < 2) {
+            return List.of();
+        }
+        return gimnasioRepository.findTop20ByNombreContainingIgnoreCaseOrderByNombreAsc(q.trim()).stream()
+                .map(g -> GimnasioResumenResponse.builder()
+                        .id(g.getId())
+                        .nombre(g.getNombre())
+                        .regionNombre(g.getRegion() != null ? g.getRegion().getNombre() : null)
+                        .build())
                 .toList();
     }
 

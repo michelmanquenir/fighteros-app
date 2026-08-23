@@ -1,5 +1,6 @@
 package com.killerdev.fighteros_app.dto.evento;
 
+import com.killerdev.fighteros_app.model.enums.ModalidadInscripcionEnum;
 import com.killerdev.fighteros_app.model.enums.TipoEventoEnum;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
@@ -33,6 +34,11 @@ public class EventoCreateRequest {
 
     @Positive
     private Integer cuposTotales;
+
+    private ModalidadInscripcionEnum modalidad;
+
+    @Positive
+    private Integer cuposPorGimnasio;
 
     private String reglamentoUrl;
 

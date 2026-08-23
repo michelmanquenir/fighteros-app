@@ -1,6 +1,7 @@
 package com.killerdev.fighteros_app.dto.evento;
 
 import com.killerdev.fighteros_app.model.enums.EstadoEventoEnum;
+import com.killerdev.fighteros_app.model.enums.ModalidadInscripcionEnum;
 import com.killerdev.fighteros_app.model.enums.TipoEventoEnum;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,6 +20,8 @@ public class EventoResponse {
     private Short regionId;
     private String regionNombre;
     private Integer cuposTotales;
+    private ModalidadInscripcionEnum modalidad;
+    private Integer cuposPorGimnasio;
     private EstadoEventoEnum estado;
     private String afichePosterUrl;
     private String reglamentoUrl;

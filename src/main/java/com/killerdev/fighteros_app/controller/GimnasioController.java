@@ -2,6 +2,7 @@ package com.killerdev.fighteros_app.controller;
 
 import com.killerdev.fighteros_app.dto.gimnasio.GimnasioCreateRequest;
 import com.killerdev.fighteros_app.dto.gimnasio.GimnasioMioResponse;
+import com.killerdev.fighteros_app.dto.gimnasio.GimnasioResumenResponse;
 import com.killerdev.fighteros_app.security.CustomUserDetails;
 import com.killerdev.fighteros_app.service.GimnasioService;
 import jakarta.validation.Valid;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -33,5 +35,10 @@ public class GimnasioController {
     @GetMapping("/mios")
     public List<GimnasioMioResponse> obtenerMios(@AuthenticationPrincipal CustomUserDetails principal) {
         return gimnasioService.obtenerMios(principal.getId());
+    }
+
+    @GetMapping
+    public List<GimnasioResumenResponse> buscar(@RequestParam(required = false) String q) {
+        return gimnasioService.buscar(q);
     }
 }
