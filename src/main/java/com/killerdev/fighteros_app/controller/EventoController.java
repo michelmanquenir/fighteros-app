@@ -114,4 +114,10 @@ public class EventoController {
                                                      @AuthenticationPrincipal CustomUserDetails principal) {
         return inscripcionService.asignarTorneo(id, boxeadorId, request.getTorneoId(), principal.getId());
     }
+
+    @PostMapping("/{id}/cartelera/publicar")
+    public EventoResponse publicarCartelera(@PathVariable UUID id,
+                                             @AuthenticationPrincipal CustomUserDetails principal) {
+        return eventoService.publicarCartelera(id, principal.getId());
+    }
 }

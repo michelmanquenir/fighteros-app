@@ -21,6 +21,7 @@ import com.killerdev.fighteros_app.repository.identidad.RegionRepository;
 import com.killerdev.fighteros_app.repository.identidad.UsuarioRepository;
 import com.killerdev.fighteros_app.repository.identidad.UsuarioRolRepository;
 import com.killerdev.fighteros_app.storage.StorageService;
+import com.killerdev.fighteros_app.util.EventoUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -100,6 +101,7 @@ public class EventoService {
                 .nombre(request.getNombre())
                 .tipo(request.getTipo())
                 .fecha(request.getFecha())
+                .hora(request.getHora())
                 .lugar(request.getLugar())
                 .region(resolverRegion(request.getRegionId()))
                 .cuposTotales(request.getCuposTotales())
@@ -107,6 +109,8 @@ public class EventoService {
                 .cuposPorGimnasio(request.getCuposPorGimnasio())
                 .reglamentoUrl(request.getReglamentoUrl())
                 .afichePosterUrl(request.getAfichePosterUrl())
+                .linkEntradas(request.getLinkEntradas())
+                .carteleraPublicada(false)
                 .estado(EstadoEventoEnum.planificado)
                 .build();
         evento = eventoRepository.save(evento);
@@ -128,6 +132,9 @@ public class EventoService {
         }
         if (request.getFecha() != null) {
             evento.setFecha(request.getFecha());
+        }
+        if (request.getHora() != null) {
+            evento.setHora(request.getHora());
         }
         if (request.getLugar() != null) {
             evento.setLugar(request.getLugar());
@@ -153,7 +160,22 @@ public class EventoService {
         if (request.getAfichePosterUrl() != null) {
             evento.setAfichePosterUrl(request.getAfichePosterUrl());
         }
+        if (request.getLinkEntradas() != null) {
+            evento.setLinkEntradas(request.getLinkEntradas());
+        }
 
+        return aResponse(eventoRepository.save(evento));
+    }
+
+    @Transactional
+    public EventoResponse publicarCartelera(UUID id, UUID usuarioAutenticadoId) {
+        Evento evento = buscarEvento(id);
+        boolean esDueno = evento.getOrganizador().getId().equals(usuarioAutenticadoId);
+        boolean esAdmin = tieneRol(usuarioAutenticadoId, RolUsuarioEnum.admin);
+        if (!esDueno && !esAdmin) {
+            throw new AccesoDenegadoException("No puedes publicar la cartelera de un evento que no organizas");
+        }
+        evento.setCarteleraPublicada(true);
         return aResponse(eventoRepository.save(evento));
     }
 
@@ -206,6 +228,7 @@ public class EventoService {
                 .nombre(e.getNombre())
                 .tipo(e.getTipo())
                 .fecha(e.getFecha())
+                .hora(e.getHora())
                 .lugar(e.getLugar())
                 .regionId(e.getRegion() != null ? e.getRegion().getId() : null)
                 .regionNombre(e.getRegion() != null ? e.getRegion().getNombre() : null)
@@ -215,6 +238,9 @@ public class EventoService {
                 .estado(e.getEstado())
                 .afichePosterUrl(e.getAfichePosterUrl())
                 .reglamentoUrl(e.getReglamentoUrl())
+                .linkEntradas(e.getLinkEntradas())
+                .carteleraPublicada(e.isCarteleraPublicada())
+                .inscripcionesCerradas(EventoUtils.inscripcionesCerradas(e))
                 .organizadorId(e.getOrganizador().getId())
                 .organizadorNombre(e.getOrganizador().getNombre())
                 .gimnasioId(e.getGimnasio() != null ? e.getGimnasio().getId() : null)

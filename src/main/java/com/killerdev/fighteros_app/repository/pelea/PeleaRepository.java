@@ -21,4 +21,7 @@ public interface PeleaRepository extends JpaRepository<Pelea, UUID> {
                                           @Param("estado") EstadoPeleaEnum estado);
 
     List<Pelea> findByEvento_IdOrderByRondaAscCreatedAtAsc(UUID eventoId);
+
+    List<Pelea> findByBoxeadorA_Gimnasio_IdInOrBoxeadorB_Gimnasio_IdIn(List<UUID> gimnasioIdsA,
+                                                                        List<UUID> gimnasioIdsB);
 }

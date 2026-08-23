@@ -1,8 +1,10 @@
 package com.killerdev.fighteros_app.controller;
 
+import com.killerdev.fighteros_app.dto.boxeador.CompatibilidadResponse;
 import com.killerdev.fighteros_app.dto.evento.EventoPeleaCreateRequest;
 import com.killerdev.fighteros_app.dto.evento.EventoPeleaResponse;
 import com.killerdev.fighteros_app.dto.evento.EventoPeleaResultadoRequest;
+import com.killerdev.fighteros_app.dto.evento.PeleaConfirmacionRequest;
 import com.killerdev.fighteros_app.security.CustomUserDetails;
 import com.killerdev.fighteros_app.service.EventoPeleaService;
 import jakarta.validation.Valid;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -35,6 +38,19 @@ public class EventoPeleaController {
         return peleaService.listar(eventoId);
     }
 
+    @GetMapping("/sugerencias")
+    public List<CompatibilidadResponse> sugerirRivales(@PathVariable UUID eventoId,
+                                                         @RequestParam UUID boxeadorId) {
+        return peleaService.sugerirRivales(eventoId, boxeadorId);
+    }
+
+    @PostMapping("/generar-automatico")
+    public List<EventoPeleaResponse> generarAutomatico(@PathVariable UUID eventoId,
+                                                         @RequestParam(required = false) UUID torneoId,
+                                                         @AuthenticationPrincipal CustomUserDetails principal) {
+        return peleaService.generarAutomatico(eventoId, torneoId, principal.getId());
+    }
+
     @PostMapping
     public EventoPeleaResponse crear(@PathVariable UUID eventoId,
                                       @Valid @RequestBody EventoPeleaCreateRequest request,
@@ -48,6 +64,14 @@ public class EventoPeleaController {
                                                     @RequestBody EventoPeleaResultadoRequest request,
                                                     @AuthenticationPrincipal CustomUserDetails principal) {
         return peleaService.registrarResultado(eventoId, peleaId, request, principal.getId());
+    }
+
+    @PutMapping("/{peleaId}/confirmacion")
+    public EventoPeleaResponse registrarConfirmacion(@PathVariable UUID eventoId,
+                                                       @PathVariable UUID peleaId,
+                                                       @Valid @RequestBody PeleaConfirmacionRequest request,
+                                                       @AuthenticationPrincipal CustomUserDetails principal) {
+        return peleaService.registrarConfirmacion(eventoId, peleaId, request.getAceptar(), principal.getId());
     }
 
     @DeleteMapping("/{peleaId}")

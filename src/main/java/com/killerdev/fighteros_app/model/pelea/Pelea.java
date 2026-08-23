@@ -4,6 +4,7 @@ import com.killerdev.fighteros_app.model.deportivo.Arbitro;
 import com.killerdev.fighteros_app.model.deportivo.Boxeador;
 import com.killerdev.fighteros_app.model.deportivo.CategoriaPeso;
 import com.killerdev.fighteros_app.model.enums.EstadoPeleaEnum;
+import com.killerdev.fighteros_app.model.enums.EstadoSolicitudEnum;
 import com.killerdev.fighteros_app.model.enums.EstadoValidacionEnum;
 import com.killerdev.fighteros_app.model.enums.MetodoVictoriaEnum;
 import com.killerdev.fighteros_app.model.enums.ResultadoPeleaEnum;
@@ -104,6 +105,14 @@ public class Pelea {
     @Column(name = "estado_validacion", nullable = false)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private EstadoValidacionEnum estadoValidacion;
+
+    @Column(name = "confirmacion_gimnasio_a", nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    private EstadoSolicitudEnum confirmacionGimnasioA;
+
+    @Column(name = "confirmacion_gimnasio_b", nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    private EstadoSolicitudEnum confirmacionGimnasioB;
 
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private OffsetDateTime createdAt;

@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Getter
 @Setter
@@ -15,6 +16,8 @@ public class EventoUpdateRequest {
     private String nombre;
 
     private LocalDate fecha;
+
+    private LocalTime hora;
 
     private String lugar;
 
@@ -33,4 +36,6 @@ public class EventoUpdateRequest {
     private String reglamentoUrl;
 
     private String afichePosterUrl;
+
+    private String linkEntradas;
 }

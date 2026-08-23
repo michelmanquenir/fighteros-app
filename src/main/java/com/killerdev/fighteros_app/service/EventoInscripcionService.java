@@ -21,6 +21,7 @@ import com.killerdev.fighteros_app.repository.evento.EventoRepository;
 import com.killerdev.fighteros_app.repository.evento.EventoTorneoRepository;
 import com.killerdev.fighteros_app.repository.identidad.GimnasioRepository;
 import com.killerdev.fighteros_app.repository.identidad.UsuarioRolRepository;
+import com.killerdev.fighteros_app.util.EventoUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -88,6 +89,10 @@ public class EventoInscripcionService {
 
         if (inscripcionRepository.existsByEvento_IdAndBoxeador_Id(eventoId, boxeador.getId())) {
             throw new DuplicateResourceException("Este boxeador ya está inscrito en el evento");
+        }
+
+        if (EventoUtils.inscripcionesCerradas(evento)) {
+            throw new OperacionInvalidaException("Las inscripciones para este evento ya cerraron");
         }
 
         if (evento.getModalidad() == ModalidadInscripcionEnum.cerrada && !esOrganizador && !esAdmin) {

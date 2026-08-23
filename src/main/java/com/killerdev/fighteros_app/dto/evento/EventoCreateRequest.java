@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.UUID;
 
 @Getter
@@ -25,6 +26,8 @@ public class EventoCreateRequest {
     @NotNull
     @FutureOrPresent
     private LocalDate fecha;
+
+    private LocalTime hora;
 
     private String lugar;
 
@@ -43,4 +46,6 @@ public class EventoCreateRequest {
     private String reglamentoUrl;
 
     private String afichePosterUrl;
+
+    private String linkEntradas;
 }

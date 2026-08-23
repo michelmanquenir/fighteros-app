@@ -26,6 +26,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -66,6 +67,8 @@ public class Evento {
     @Column(nullable = false)
     private LocalDate fecha;
 
+    private LocalTime hora;
+
     private String lugar;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -90,6 +93,12 @@ public class Evento {
 
     @Column(name = "cantidad_publico")
     private Integer cantidadPublico;
+
+    @Column(name = "cartelera_publicada", nullable = false)
+    private boolean carteleraPublicada;
+
+    @Column(name = "link_entradas")
+    private String linkEntradas;
 
     @Column(nullable = false)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
