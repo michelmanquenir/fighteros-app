@@ -5,6 +5,9 @@ import com.killerdev.fighteros_app.dto.auth.LoginRequest;
 import com.killerdev.fighteros_app.dto.auth.RegistroBoxeadorRequest;
 import com.killerdev.fighteros_app.dto.auth.RegistroGimnasioRequest;
 import com.killerdev.fighteros_app.dto.auth.RegistroUsuarioRequest;
+import com.killerdev.fighteros_app.dto.gimnasio.AlumnoCreadoResponse;
+import com.killerdev.fighteros_app.dto.gimnasio.CrearAlumnoRequest;
+import com.killerdev.fighteros_app.exception.AccesoDenegadoException;
 import com.killerdev.fighteros_app.exception.DuplicateResourceException;
 import com.killerdev.fighteros_app.exception.ResourceNotFoundException;
 import com.killerdev.fighteros_app.exception.RutInvalidoException;
@@ -136,6 +139,53 @@ public class AuthService {
         boxeadorRepository.save(boxeador);
 
         return construirRespuesta(usuario, List.of(RolUsuarioEnum.boxeador.name()));
+    }
+
+    @Transactional
+    public AlumnoCreadoResponse registrarAlumno(UUID gimnasioId, CrearAlumnoRequest request,
+                                                 UUID usuarioAutenticadoId) {
+        Gimnasio gimnasio = gimnasioRepository.findById(gimnasioId)
+                .orElseThrow(() -> new ResourceNotFoundException("Gimnasio no encontrado"));
+        boolean esDueño = gimnasio.getUsuarioAdmin().getId().equals(usuarioAutenticadoId);
+        boolean esAdmin = obtenerRoles(usuarioAutenticadoId).contains(RolUsuarioEnum.admin.name());
+        if (!esDueño && !esAdmin) {
+            throw new AccesoDenegadoException("No puedes agregar alumnos a un gimnasio que no es tuyo");
+        }
+
+        if (!RutValidator.esValido(request.getRut())) {
+            throw new RutInvalidoException("El RUT ingresado no es válido");
+        }
+        String rutNormalizado = RutValidator.normalizar(request.getRut());
+        if (boxeadorRepository.existsByRut(rutNormalizado)) {
+            throw new DuplicateResourceException("Ya existe un boxeador registrado con ese RUT");
+        }
+
+        Usuario usuario = crearUsuarioConRol(request.getNombre(), request.getEmail(), request.getPassword(),
+                request.getRegionId(), RolUsuarioEnum.boxeador);
+
+        CategoriaPeso categoria = resolverCategoria(request.getCategoriaId(), request.getSexo(), request.getPesoActual());
+
+        Boxeador boxeador = Boxeador.builder()
+                .usuario(usuario)
+                .rut(rutNormalizado)
+                .fechaNacimiento(request.getFechaNacimiento())
+                .sexo(request.getSexo())
+                .pesoActual(request.getPesoActual())
+                .pesoHabitual(request.getPesoHabitual())
+                .categoria(categoria)
+                .gimnasio(gimnasio)
+                .region(resolverRegion(request.getRegionId()))
+                .estadoDeportivo(EstadoDeportivoEnum.activo)
+                .nivelProgresion(NivelProgresionEnum.debutante)
+                .perfilPublico(true)
+                .build();
+        boxeadorRepository.save(boxeador);
+
+        return AlumnoCreadoResponse.builder()
+                .id(usuario.getId())
+                .nombre(usuario.getNombre())
+                .email(usuario.getEmail())
+                .build();
     }
 
     @Transactional(readOnly = true)

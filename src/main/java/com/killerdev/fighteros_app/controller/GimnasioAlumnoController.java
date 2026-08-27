@@ -1,7 +1,10 @@
 package com.killerdev.fighteros_app.controller;
 
+import com.killerdev.fighteros_app.dto.gimnasio.AlumnoCreadoResponse;
+import com.killerdev.fighteros_app.dto.gimnasio.CrearAlumnoRequest;
 import com.killerdev.fighteros_app.dto.gimnasio.GimnasioAlumnoRequest;
 import com.killerdev.fighteros_app.security.CustomUserDetails;
+import com.killerdev.fighteros_app.service.AuthService;
 import com.killerdev.fighteros_app.service.GimnasioService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -20,9 +23,11 @@ import java.util.UUID;
 public class GimnasioAlumnoController {
 
     private final GimnasioService gimnasioService;
+    private final AuthService authService;
 
-    public GimnasioAlumnoController(GimnasioService gimnasioService) {
+    public GimnasioAlumnoController(GimnasioService gimnasioService, AuthService authService) {
         this.gimnasioService = gimnasioService;
+        this.authService = authService;
     }
 
     @PostMapping
@@ -31,6 +36,13 @@ public class GimnasioAlumnoController {
                                          @AuthenticationPrincipal CustomUserDetails principal) {
         gimnasioService.agregarAlumno(gimnasioId, request.getBoxeadorId(), principal.getId());
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/nuevos")
+    public AlumnoCreadoResponse crear(@PathVariable UUID gimnasioId,
+                                       @Valid @RequestBody CrearAlumnoRequest request,
+                                       @AuthenticationPrincipal CustomUserDetails principal) {
+        return authService.registrarAlumno(gimnasioId, request, principal.getId());
     }
 
     @DeleteMapping("/{boxeadorId}")
