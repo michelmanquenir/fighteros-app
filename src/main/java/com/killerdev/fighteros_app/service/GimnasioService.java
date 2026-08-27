@@ -3,13 +3,16 @@ package com.killerdev.fighteros_app.service;
 import com.killerdev.fighteros_app.dto.gimnasio.GimnasioCreateRequest;
 import com.killerdev.fighteros_app.dto.gimnasio.GimnasioMioResponse;
 import com.killerdev.fighteros_app.dto.gimnasio.GimnasioResumenResponse;
+import com.killerdev.fighteros_app.exception.AccesoDenegadoException;
 import com.killerdev.fighteros_app.exception.ResourceNotFoundException;
+import com.killerdev.fighteros_app.model.deportivo.Boxeador;
 import com.killerdev.fighteros_app.model.enums.RolUsuarioEnum;
 import com.killerdev.fighteros_app.model.identidad.Gimnasio;
 import com.killerdev.fighteros_app.model.identidad.Region;
 import com.killerdev.fighteros_app.model.identidad.Usuario;
 import com.killerdev.fighteros_app.model.identidad.UsuarioRol;
 import com.killerdev.fighteros_app.model.identidad.UsuarioRolId;
+import com.killerdev.fighteros_app.repository.deportivo.BoxeadorRepository;
 import com.killerdev.fighteros_app.repository.identidad.GimnasioRepository;
 import com.killerdev.fighteros_app.repository.identidad.RegionRepository;
 import com.killerdev.fighteros_app.repository.identidad.UsuarioRepository;
@@ -27,15 +30,18 @@ public class GimnasioService {
     private final UsuarioRepository usuarioRepository;
     private final UsuarioRolRepository usuarioRolRepository;
     private final RegionRepository regionRepository;
+    private final BoxeadorRepository boxeadorRepository;
 
     public GimnasioService(GimnasioRepository gimnasioRepository,
                             UsuarioRepository usuarioRepository,
                             UsuarioRolRepository usuarioRolRepository,
-                            RegionRepository regionRepository) {
+                            RegionRepository regionRepository,
+                            BoxeadorRepository boxeadorRepository) {
         this.gimnasioRepository = gimnasioRepository;
         this.usuarioRepository = usuarioRepository;
         this.usuarioRolRepository = usuarioRolRepository;
         this.regionRepository = regionRepository;
+        this.boxeadorRepository = boxeadorRepository;
     }
 
     @Transactional
@@ -80,6 +86,39 @@ public class GimnasioService {
                         .regionNombre(g.getRegion() != null ? g.getRegion().getNombre() : null)
                         .build())
                 .toList();
+    }
+
+    @Transactional
+    public void agregarAlumno(UUID gimnasioId, UUID boxeadorId, UUID usuarioAutenticadoId) {
+        Gimnasio gimnasio = verificarDueño(gimnasioId, usuarioAutenticadoId);
+        Boxeador boxeador = boxeadorRepository.findById(boxeadorId)
+                .orElseThrow(() -> new ResourceNotFoundException("Boxeador no encontrado"));
+        boxeador.setGimnasio(gimnasio);
+        boxeadorRepository.save(boxeador);
+    }
+
+    @Transactional
+    public void quitarAlumno(UUID gimnasioId, UUID boxeadorId, UUID usuarioAutenticadoId) {
+        verificarDueño(gimnasioId, usuarioAutenticadoId);
+        Boxeador boxeador = boxeadorRepository.findById(boxeadorId)
+                .orElseThrow(() -> new ResourceNotFoundException("Boxeador no encontrado"));
+        if (boxeador.getGimnasio() == null || !boxeador.getGimnasio().getId().equals(gimnasioId)) {
+            throw new ResourceNotFoundException("Ese boxeador no pertenece a este gimnasio");
+        }
+        boxeador.setGimnasio(null);
+        boxeadorRepository.save(boxeador);
+    }
+
+    private Gimnasio verificarDueño(UUID gimnasioId, UUID usuarioAutenticadoId) {
+        Gimnasio gimnasio = gimnasioRepository.findById(gimnasioId)
+                .orElseThrow(() -> new ResourceNotFoundException("Gimnasio no encontrado"));
+        boolean esDueño = gimnasio.getUsuarioAdmin().getId().equals(usuarioAutenticadoId);
+        boolean esAdmin = usuarioRolRepository.findByUsuario_Id(usuarioAutenticadoId).stream()
+                .anyMatch(ur -> ur.getId().getRol() == RolUsuarioEnum.admin);
+        if (!esDueño && !esAdmin) {
+            throw new AccesoDenegadoException("No puedes gestionar los alumnos de un gimnasio que no es tuyo");
+        }
+        return gimnasio;
     }
 
     private void agregarRolSiFalta(Usuario usuario, UUID usuarioId) {
